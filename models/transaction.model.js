@@ -78,12 +78,12 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
 
-        models.account.hasMany(Transaction, {
+        Transaction.belongsTo(models.account, {
           as: 'sender',
           foreignKey: 'from_id'
         });
 
-        models.account.hasMany(Transaction, {
+        Transaction.belongsTo(models.account, {
           as: 'recipient',
           foreignKey: 'to_id'
         });

@@ -12,10 +12,15 @@ exports.index = function(req,res) {
         { from_id: req.query.account_id },
         { to_id: req.query.account_id }
       ]
-    }
-  }).then(function(result){
+    },
+    include: [
+      { model: models.account, foreignKey: 'to_id', as: 'recipient'}
+    ],
+  }).then(function(result) {
+    console.log(result);
     return res.json(result);
   }).catch(function(error){
+    console.log(error);
     return res.json(error);
   });
 };
