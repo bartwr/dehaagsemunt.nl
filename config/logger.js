@@ -20,9 +20,9 @@ var SendGridLogger = winston.transports.SendGridLogger = function (options) {
   this.name = 'sendGridLogger';
   this.level = options.level || 'info';
 
-  this.to = options.to || 'admin@columby.com';
-  this.from = options.from || 'admin@columby.com';
-  this.subject = options.subject || 'Message from Columby API';
+  this.to = options.to || 'info@urbanlink.nl';
+  this.from = options.from || 'info@urbanlink.nl';
+  this.subject = options.subject || 'Message from De Munt';
   this.html = options.html || 'Content missing';
 };
 

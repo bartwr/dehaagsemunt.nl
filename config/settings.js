@@ -14,20 +14,38 @@ module.exports = {
   environment   : process.env.NODE_ENV              || env.NODE_ENV                || 'development',
   port          : process.env.NODE_API_PORT         || env.NODE_API_PORT           || 8000,
 
-  database : {
-    host        : process.env.DATABASE_HOST         || env.DATABASE_HOST           || 'localhost',
-    database    : process.env.DATABASE_DATABASE     || env.DATABASE_DATABASE       || 'voootapi',
-    username    : process.env.DATABASE_USERNAME     || env.DATABASE_USERNAME       || 'voootapi',
-    password    : process.env.DATABASE_PASSWORD     || env.DATABASE_PASSWORD       || 'voootapi',
+  db : {
+    name        : process.env.DATABASE_NAME         || env.DATABASE_NAME           || 'database',
+    username    : process.env.DATABASE_USERNAME     || env.DATABASE_USERNAME       || 'username',
+    password    : process.env.DATABASE_PASSWORD     || env.DATABASE_PASSWORD       || 'password',
     port        : process.env.DATABASE_PORT         || env.DATABASE_PORT           || '3306',
-    dialect     : process.env.DATABASE_DIALECT      || env.DATABASE_DIALECT        || 'mysql'
+    settings: {
+      host        : process.env.DATABASE_HOST         || env.DATABASE_HOST           || 'localhost',
+      dialect     : process.env.DATABASE_DIALECT      || env.DATABASE_DIALECT        || 'mysql',
+      pool: {
+        max: 5,
+        min: 0,
+        idle: 10000
+      },
+      logging: false,
+      define: {
+        underscored: true,
+        timestamps: true,
+        freezeTableName: true
+      }
+    }
+  },
+
+  jwt : {
+    secret      : process.env.JWT_SECRET            || env.JWT_SECRET               || '12345',
+    root        : process.env.JWT_ROOT              || env.JWT_ROOT                 || 'https://auth0.com'
   },
 
   admin: {
     name: 'Arn van der Pluijm',
     email: 'arn@urbanlink.nl'
   },
-  
+
   sendgrid : {
     key         : process.env.SENDGRID_API_KEY      || env.SENDGRID_API_KEY        || '',
   },

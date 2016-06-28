@@ -4,11 +4,11 @@
 var compression = require('compression');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
-// var cookieParser = require('cookie-parser');
 var errorHandler = require('errorhandler');
 var settings = require('./settings');
 var cors = require('cors');
 var logger = require('winston');
+var jwt = require('./../middleware/jwt.service');
 
 
 module.exports = function(app) {
@@ -20,6 +20,15 @@ module.exports = function(app) {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(methodOverride());
   app.use(cors());
+  //app.use(cookieParser());
+
+  // Validate the JWT for every request.
+  app.use(function (req, res, next) {
+    jwt.decode(req, function(result) {
+      next();
+    });
+  });
+
 
   if ('production' === env) {
     //app.use(express.static(path.join(settings.root, 'public')));
