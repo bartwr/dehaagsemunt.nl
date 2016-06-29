@@ -14,10 +14,10 @@ exports.index = function(req,res) {
       ]
     },
     include: [
-      { model: models.account, foreignKey: 'to_id', as: 'recipient'}
+      { model: models.account, foreignKey: 'to_id', as: 'recipient'},
+      { model: models.account, foreignKey: 'from_id', as: 'sender'}
     ],
   }).then(function(result) {
-    console.log(result);
     return res.json(result);
   }).catch(function(error){
     console.log(error);
