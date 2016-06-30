@@ -1,8 +1,9 @@
 'use strict';
 
+var logger = require('winston');
 var models = require('../models/index');
 var request = require('request');
-
+var balanceCtrl = require('../controllers/balance.controller');
 
 exports.index = function(req,res) {
   console.log('Transaction index. ');
@@ -47,10 +48,13 @@ exports.show = function(req,res) {
 };
 
 exports.create = function(req,res) {
-  console.log('Create transaction. ');
-  models.transaction.create(req.body).then(function(result) {
-    console.log(result);
-    return res.json(result);
+  logger.debug('Create transaction. ');
+  models.transaction.create(req.body).then(function(transaction) {
+    // logger.debug(transaction);
+    if (transaction) {
+      balanceCtrl.handleTransaction(transaction.dataValues.id);
+    }
+    return res.json(transaction);
   }).catch(function(error) {
     return res.json(error);
   });
