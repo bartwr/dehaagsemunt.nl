@@ -8,7 +8,7 @@ module.exports = function(sequelize, DataTypes) {
   // remove a specific amount from a balance.
   function subtractBalance(balance, amount, cb) {
     // Make sure we are working with integers
-    amount=parseInt(amount);
+    amount = parseInt(amount);
     logger.debug('subtract amount: ' + amount);
     logger.debug('amount_meta: ', balance.amount_meta);
 
@@ -45,24 +45,56 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
 
-    newBalance = newBalance.reverse();
-    changeBalance = changeBalance.reverse();
-    logger.debug('Sending new balance: ' + newBalance);
-    cb({change: changeBalance, new: newBalance});
+    // calculate total
+    var total =0;
+    for (var k=0; k<reverseBalance.length; k++) {
+      total += reverseBalance[ k];
+    }
+    var result = {
+      new: newBalance.reverse(),
+      change: changeBalance.reverse(),
+      amount: parseInt(total)
+    };
+
+    logger.debug('Returning new balance: ', result);
+    cb(result);
   }
 
 
-  // remove a specific amount from a balance.
+  // Add a specific amount from a balance.
   function addBalance(balance, change, cb) {
+    logger.debug('--- addbalance ---');
+    logger.debug(balance);
+    logger.debug(change);
+
+    // bump the steps for the change array
+    change.unshift(0);
+    change[ 5] += change[ 6];
+    change.splice(5,1);
+    logger.debug('bumped change: ', change);
 
     var oldBalance = JSON.parse(balance);
     var newBalance = oldBalance;
+
+    logger.debug('old balance: ', oldBalance);
 
     for (var i=0; i<newBalance.length; i++) {
       newBalance[ i] += parseInt(change[ i]);
     }
 
-    cb(newBalance);
+    logger.debug('Returning new balance: ', newBalance);
+
+    // calculate total
+    var total =0;
+    for (var k=0; k<newBalance.length; k++) {
+      total += newBalance[ k];
+    }
+    var result = {
+      new: newBalance,
+      amount: parseInt(total)
+    };
+
+    cb(result);
   }
 
 
@@ -93,6 +125,9 @@ module.exports = function(sequelize, DataTypes) {
           foreignKey: 'to_id'
         });
 
+        Transaction.hasMany(models.balance, {
+          as: 'balance'
+        });
       }
     }
   });
@@ -101,42 +136,56 @@ module.exports = function(sequelize, DataTypes) {
 
     var models = require('../models/index');
 
+    var toId = transaction.dataValues.to_id;
+    var fromId = transaction.dataValues.from_id;
+    var transactionAmount = parseInt(transaction.dataValues.amount);
+
+    // Update the balances for this transaction
     logger.debug('Transaction created, updating balance. ');
-    if (transaction.dataValues.to_id && transaction.dataValues.from_id) {
+
+    // Check if is overboeking
+    if (toId && fromId) {
       logger.debug('Handling Overboeking');
       // get latest balance for user
       models.balance.findOne({
-        where: {
-          account_id: transaction.dataValues.from_id
-        }
+        where: { account_id: fromId },
+        order: 'created_at DESC'
       }).then(function(balance) {
+        logger.debug('Balance found for from account: ', balance.dataValues);
+        // update balance for from-account (subtract)
+        subtractBalance(balance.dataValues, transactionAmount, function(balance) {
+          logger.debug('New balance after subtraction: ', balance);
+          console.log(balance);
 
-        // create balance steps to be removed and added.
-
-        //
-        subtractBalance(balance.dataValues, transaction.dataValues.amount, function(result) {
-          logger.debug('Subtract function result: ', result);
-          var changeBalance = result.change;
-          logger.debug('change', changeBalance);
+          var changeBalance = balance.change;
 
           models.balance.create({
-            amount: balance.dataValues.amount - transaction.dataValues.amount,
-            amount_meta: JSON.stringify(result.new),
-            account_id: transaction.dataValues.from_id
+            amount: balance.amount,
+            amount_meta: JSON.stringify(balance.new),
+            account_id: fromId,
+            transaction_id: transaction.id
           }).then(function(result) {
             logger.debug('New balance created for fromAccount');
 
-
             // Add balance to toAccount
             models.balance.findOne({
-              where: { account_id: transaction.dataValues.to_id }
+              where: { account_id: transaction.dataValues.to_id },
+              order: 'created_at DESC'
             }).then(function(balance) {
+              logger.debug('Balance found for to account: ', balance.dataValues);
               addBalance(balance.dataValues.amount_meta, changeBalance, function(result) {
                 logger.debug('Add function result: ', result);
                 models.balance.create({
-                  amount: balance.dataValues.amount + transaction.dataValues.amount,
-                  amount_meta: JSON.stringify(result),
-                  account_id: transaction.dataValues.to_id
+                  amount: result.amount,
+                  amount_meta: JSON.stringify(result.new),
+                  account_id: toId,
+                  transaction_id: transaction.id
+                }).then(function(result) {
+                  logger.debug(result);
+
+                }).catch(function(error) {
+                  logger.debug(error);
+                  
                 });
               });
             }).catch(function(error) {
@@ -150,6 +199,7 @@ module.exports = function(sequelize, DataTypes) {
         logger.debug(error);
       });
 
+    // Check if is inleg
     } else if (transaction.dataValues.to_id) {
       logger.debug('Handling Deposit');
       // get latest balance for this account
@@ -179,10 +229,12 @@ module.exports = function(sequelize, DataTypes) {
         return;
       });
 
+    // Check if is opname
     } else if (transaction.dataValues.from_id) {
       logger.debug('Handling Withdrawl');
 
 
+    // wrong transaction
     } else {
       logger.debug('No valid accounts found for this transaction. ');
     }

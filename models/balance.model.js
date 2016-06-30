@@ -22,6 +22,10 @@ module.exports = function(sequelize, DataTypes) {
         models.account.hasOne(Balance, {
           as: 'account'
         });
+
+        // Balance.hasOne(models.transaction, {
+        //   as: 'transaction'
+        // });
       }
     }
   });
