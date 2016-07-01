@@ -9,13 +9,16 @@ function getLatestBalance(id, cb){
   logger.debug('Fetching latest balance for account: ' + id);
   var models = require('../models/index');
 
-  models.balance.findOne({
+  return models.balance.findOne({
     where: { account_id: id },
     order: 'created_at DESC'
   }).then(function(balance) {
+    console.log(balance);
     cb(balance);
+    return null;
   }).catch(function(error){
     logger.debug('error', error);
+    return null;
   });
 }
 
@@ -26,7 +29,7 @@ function subtractBalance(balance, amount) {
   amount = parseInt(amount);
   // Setup working balances
   logger.debug('Start Subtract Balance.');
-  balance = JSON.parse(balance.amount_meta).reverse();
+  balance = balance.reverse();
   logger.debug('reverse balance: ', balance);
   var changeBalance = [0,0,0,0,0,0];
 
@@ -88,12 +91,13 @@ function bumpBalanceMeta(change) {
 
 // get the total of a balance array
 function calculateTotal(amount_meta) {
-  console.log('calculating total for ', amount_meta);
+  logger.debug('calculating total for ', amount_meta);
   // calculate total
   var total =0;
   for (var k=0; k<amount_meta.length; k++) {
     total += parseInt(amount_meta[ k]);
   }
+  logger.debug('Total calculated: ', total);
   return total;
 }
 
@@ -109,7 +113,9 @@ exports.handleTransaction = function(transaction_id, cb) {
     // variables for from account
     var from_id = transaction.dataValues.from_id;
     var to_id = transaction.dataValues.to_id;
+    // from balance: Array: [0,0,0,0,0,0]
     var fromBalance;
+    // to balance: Array: [0,0,0,0,0,0]
     var toBalance;
 
     // TODO: Check if balance already exists for this transaction
@@ -124,22 +130,33 @@ exports.handleTransaction = function(transaction_id, cb) {
     // Get balance for sender
     logger.debug('Fetching latest balance for sender');
     getLatestBalance(from_id, function(balance) {
-      console.log('get Balance: ', balance);
+      // Parse the amount_values to an array, or create a zero array
+      if (balance) {
+        if (balance.dataValues) {
+          if (balance.dataValues.amount_meta) {
+            fromBalance = JSON.parse(balance.dataValues.amount_meta);
+          }
+        }
+      } else {
+        fromBalance = [0,0,0,0,0,0];
+      }
+      logger.debug('Latest balance for sender', fromBalance);
 
-      balance = balance || {};
-      fromBalance = balance.dataValues || [0,0,0,0,0,0];
-      logger.debug('Latest from balance', fromBalance);
-
+      logger.debug('Fetching latest balance for receiver');
       getLatestBalance(to_id, function(balance) {
-        console.log('toBalance ', balance);
-
-
-        balance = balance || {};
-        toBalance = balance.dataValues || [0,0,0,0,0,0];
-        logger.debug('Latest to balance ', toBalance);
+        if (balance) {
+          if (balance.dataValues) {
+            if (balance.dataValues.amount_meta) {
+              toBalance = JSON.parse(balance.dataValues.amount_meta);
+            }
+          }
+        } else {
+          toBalance = [0,0,0,0,0,0];
+        }
+        logger.debug('Latest to balance for receiver', toBalance);
 
         var changeBalance = [transactionAmount, 0,0,0,0,0];
-        logger.debug('changeBalance ', changeBalance);
+        logger.debug('Going to change with this balance: ', changeBalance);
 
         // Array for bulkcreate of balances
         var newBalances = [];
@@ -157,25 +174,30 @@ exports.handleTransaction = function(transaction_id, cb) {
 
         // create new balances
         if (type==='transfer') {
-          logger.debug('Handling transfer ');
-          logger.debug('fromBalance: ', fromBalance);
+          logger.debug('[transfer]: Handling transfer ');
+          logger.debug('[transfer]: Handling FROM ');
+          logger.debug('[transfer]: fromBalance before Subtraction: ', fromBalance);
           fromBalance = subtractBalance(fromBalance, transactionAmount);
-          logger.debug('new fromBalance: ', fromBalance);
+          logger.debug('[transfer]: new fromBalance after Subtraction: ', fromBalance);
           changeBalance = fromBalance.change;
-          logger.debug('changeBalance: ', changeBalance);
+          logger.debug('[transfer]: changeBalance before bump: ', changeBalance);
           changeBalance = bumpBalanceMeta(changeBalance);
-          logger.debug('changeBalance, ', changeBalance);
+          logger.debug('[transfer]: changeBalance after bump, ', changeBalance);
 
           // Create new balance for sender
-          newBalances.push({
+          var newBalance = {
             amount: calculateTotal(fromBalance.new),
             amount_meta: JSON.stringify(fromBalance.new),
             account_id: from_id,
             transaction_id: transaction_id
-          });
+          };
+          logger.debug('[transfer]: new balance added to list: ', newBalance);
+          newBalances.push(newBalance);
 
+          // Handle TO balance
+          logger.debug('[transfer]: Handling TO ');
           logger.debug('Sending balances for adding: ', toBalance, changeBalance);
-          toBalance = addBalance(JSON.parse(toBalance.amount_meta), changeBalance);
+          toBalance = addBalance(toBalance, changeBalance);
           logger.debug('newToBalance', toBalance);
 
           // Create new balance for receiver
@@ -194,6 +216,7 @@ exports.handleTransaction = function(transaction_id, cb) {
           return models.balance.findAll();
         }).then(function(balances){
           console.log(balances.length);
+          return null;
         });
       });
     });
