@@ -4,7 +4,7 @@ var models = require('../models/index');
 
 
 exports.index = function(req,res) {
-  console.log('account index');
+  console.log('Account Controller: Account index');
   models.account.findAll().then(function(result){
     return res.json(result);
   }).catch(function(error){
@@ -14,13 +14,12 @@ exports.index = function(req,res) {
 
 
 exports.show = function(req,res) {
-
+console.log('Account Controller: Account show: ' + req.params.id);
   models.account.findOne({
     where: {
       id: req.params.id
     },
   }).then(function(result){
-    console.log('account show result: ', account);
     return res.json(result);
   }).catch(function(error){
     return res.json(error);
