@@ -8,7 +8,7 @@ var errorHandler = require('errorhandler');
 var settings = require('./settings');
 var cors = require('cors');
 var logger = require('winston');
-var jwt = require('./../middleware/jwt.service');
+var jwt = require('./../controllers/jwt.controller');
 
 
 module.exports = function(app) {
@@ -23,11 +23,7 @@ module.exports = function(app) {
   //app.use(cookieParser());
 
   // Validate the JWT for every request.
-  app.use(function (req, res, next) {
-    jwt.decode(req, function(result) {
-      next();
-    });
-  });
+  app.use(jwt.decode);
 
 
   if ('production' === env) {

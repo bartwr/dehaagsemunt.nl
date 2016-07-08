@@ -60,5 +60,9 @@ module.exports = {
   // synchronization settings.
   sync: {
 
+  },
+
+  mollie: {
+    apikey: process.env.MOLLIE_KEY || env.MOLLIE_KEY || ''
   }
 };

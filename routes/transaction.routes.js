@@ -1,9 +1,10 @@
 'use strict';
 
 var express = require('express');
-var router = express.Router();
+var jwt = require('./../controllers/jwt.controller');
 var controller = require('../controllers/transaction.controller');
 var permissions = require('../permissions/transaction.permissions');
+var router = express.Router();
 
 module.exports = function(app){
   router.get('/',
@@ -17,15 +18,18 @@ module.exports = function(app){
   );
 
   router.post('/',
+    jwt.checkAccount,
     permissions.canCreate,
     controller.create
   );
   router.put('/:id',
     permissions.canUpdate,
+    jwt.checkAccount,
     controller.update
   );
   router.delete('/:id',
     permissions.canDelete,
+    jwt.checkAccount,
     controller.destroy
   );
 

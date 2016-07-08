@@ -5,6 +5,12 @@ var models = require('../models/index');
 var request = require('request');
 var balanceCtrl = require('../controllers/balance.controller');
 
+
+/**
+ *
+ * Show a list of existing transactions
+ *
+ **/
 exports.index = function(req,res) {
   console.log('Transaction index. ');
   models.transaction.findAll({
@@ -27,6 +33,11 @@ exports.index = function(req,res) {
 };
 
 
+/**
+ *
+ * Show an existing transaction
+ *
+ **/
 exports.show = function(req,res) {
 
   console.log('Transaction show. ');
@@ -40,30 +51,54 @@ exports.show = function(req,res) {
     // ]
 
   }).then(function(result){
-    console.log(result);
+    logger.debug(result);
     return res.json(result);
   }).catch(function(error){
     return res.json(error);
   });
 };
 
+
+/**
+ *
+ * Create a new transaction
+ *
+ **/
 exports.create = function(req,res) {
-  logger.debug('Create transaction. ');
+  logger.debug('Creating a new transaction. ');
+
+  // Create the transaction.
   models.transaction.create(req.body).then(function(transaction) {
-    // logger.debug(transaction);
-    if (transaction) {
-      balanceCtrl.handleTransaction(transaction.dataValues.id);
-    }
-    return res.json(transaction);
+    // Update the balances after this transaction.
+    if (!transaction) { return res.json({status: 'error', msg: 'No transaction created. '}); }
+
+    balanceCtrl.handleTransaction(transaction.dataValues.id, function(result) {
+      // TODO: Check if balances are handled correctly
+
+      // All done, send the saved transaction back.
+      return res.json(transaction);
+    });
   }).catch(function(error) {
-    return res.json(error);
+    return res.json({status: 'error', msg: error });
   });
 };
 
+
+/**
+ *
+ * Update an existing transaction
+ *
+ **/
 exports.update = function(req,res) {
 
 };
 
+
+/**
+ *
+ * Delete an existing transaction
+ *
+ **/
 exports.destroy = function(req,res) {
 
 };

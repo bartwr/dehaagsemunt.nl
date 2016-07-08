@@ -14,7 +14,7 @@ exports.index = function(req,res) {
 
 
 exports.show = function(req,res) {
-console.log('Account Controller: Account show: ' + req.params.id);
+  console.log('Account Controller: Account show: ' + req.params.id);
   models.account.findOne({
     where: {
       id: req.params.id
@@ -26,17 +26,15 @@ console.log('Account Controller: Account show: ' + req.params.id);
   });
 };
 
-exports.create = function(req,res) {
 
-};
+exports.create = function(req,res) { };
 
-exports.update = function(req,res) {
 
-};
+exports.update = function(req,res) { };
 
-exports.destroy = function(req,res) {
 
-};
+exports.destroy = function(req,res) { };
+
 
 exports.showBalance = function(req,res) {
   models.balance.findOne({
@@ -46,5 +44,20 @@ exports.showBalance = function(req,res) {
     order: 'created_at DESC'
   }).then(function(balance) {
     return res.json(balance);
+  });
+};
+
+exports.search = function(req,res) {
+  var q = req.body.query;
+  console.log('Searching for username: ' + q);
+
+  models.account.findAll({
+    where: {
+      'username': { like: '%' + q + '%' } ,
+    }
+  }).then(function(result){
+    return res.json(result);
+  }).catch(function(error){
+    return res.json(error);
   });
 };

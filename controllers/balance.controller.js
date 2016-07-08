@@ -102,8 +102,13 @@ function calculateTotal(amount_meta) {
 }
 
 
-// handleTransaction
+/***
+ *
+ * Handle transaction: Create new balances for sender and receiver. 
+ *
+ **/
 exports.handleTransaction = function(transaction_id, cb) {
+
   var models = require('../models/index');
 
   models.transaction.findById(transaction_id).then(function(transaction) {
@@ -210,13 +215,11 @@ exports.handleTransaction = function(transaction_id, cb) {
         }
 
         logger.debug('Creating new balances in database: ');
-        console.log(newBalances);
 
         models.balance.bulkCreate(newBalances).then(function() {
           return models.balance.findAll();
         }).then(function(balances){
-          console.log(balances.length);
-          return null;
+          cb(balances);
         });
       });
     });

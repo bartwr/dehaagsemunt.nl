@@ -22,5 +22,10 @@ module.exports = function(app){
     controller.showBalance
   );
 
+  router.post('/search',
+    permission.canView,
+    controller.search
+  );
+
   app.use('/account', router);
 };
