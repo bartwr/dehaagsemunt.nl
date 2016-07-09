@@ -9,8 +9,9 @@ module.exports = function(sequelize, DataTypes) {
     description: DataTypes.STRING,
 
     amount: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false,
+
     },
 
     status: {

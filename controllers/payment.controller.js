@@ -13,7 +13,8 @@ mollie.setApiKey(settings.mollie.apikey);
  *
  **/
 exports.create = function(req,res) {
-  logger.debug('Creating a new payment', req.body);
+  logger.debug('Creating a new payment');
+  console.log(req.user);
   // Save payment in db with status -in-progress
   var payment = {
     description: 'Inleg De Haagse Munt',
@@ -21,15 +22,24 @@ exports.create = function(req,res) {
     status: 'concept',
     account_id: req.user.id
   };
+  console.log(payment);
 
   models.payment.create(payment).then(function(payment) {
+    console.log(payment.dataValues);
     if (payment) {
-      // Create the mollie call
-      mollie.payments.create({
+      logger.debug('sending payment to mollie.');
+      var molliePayment = {
         amount: payment.dataValues.amount,
         description: 'Inleg De Haagse Munt: Order id: ' + payment.dataValues.id,
-        redirectUrl: 'https://app.dehaagsemunt.nl/payments/'+ payment.dataValues.id
-      }, function (payment) {
+        redirectUrl: 'https://app.dehaagsemunt.nl/payments/'+ payment.dataValues.id,
+        metadata: {
+          payment_id: payment.dataValues.id
+        }
+      };
+      console.log('m');
+      console.log(molliePayment);
+      // Create the mollie call
+      mollie.payments.create(molliePayment, function (payment) {
         logger.debug(payment);
         // handle the payment
         res.json(payment);
@@ -51,20 +61,35 @@ exports.create = function(req,res) {
 exports.mollieHook = function(req,res) {
   logger.debug('Handling mollie webhook request.');
 
-  mollie.payments.get(req.body.id, function(payment) {
-    if (payment.error) {
-      logger.debug(payment.error);
-      return res.json(403);
+  mollie.payments.get(req.body.id, function(molliePayment) {
+    if (molliePayment.error) {
+      logger.debug(molliePayment.error);
+      return res.json(403, molliePayment.error);
     }
-    logger.debug(payment);
-    models.payment.updateAttributes({
-      status: payment.status
-    }).then(function(result) {
-      logger.debug('update result', result);
-      return res.json(result);
-    }).error(function(error) {
-      logger.warning(error);
-      return res.json(403);
+    if (!molliePayment.id) {
+      return res.json(403, {msg: 'payment not found', payment: molliePayment});
+    }
+    console.log(molliePayment);
+    // fetch the saved payment in db
+    models.payment.findById(molliePayment.payment_id).then(function(payment){
+      if (!payment) { return payment; }
+
+      // Check for status update
+      if ( (payment.dataValues.status !== 'paid') && (molliePayment.status==='paid') ) {
+        // TODO: update balance
+
+      }
+      // Update the payment status
+      payment.update({status: molliePayment.status}).then(function(result) {
+        return res.json(result);
+      }).catch(function(error) {
+        return res.json(error);
+      });
+
+      // TODO: Send a mail with the status update.
+
+    }).catch(function(error) {
+      return res.json(error);
     });
   });
 };
