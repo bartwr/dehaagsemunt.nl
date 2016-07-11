@@ -36,13 +36,20 @@ exports.create = function(req,res) {
           payment_id: payment.dataValues.id
         }
       };
-      console.log('m');
-      console.log(molliePayment);
       // Create the mollie call
-      mollie.payments.create(molliePayment, function (payment) {
-        logger.debug(payment);
+      mollie.payments.create(molliePayment, function (newPayment) {
+        logger.debug('Payment received by Mollie: ', newPayment);
         // handle the payment
-        res.json(payment);
+        // Add the mollie data to the database payment
+        payment.update({
+          status: newPayment.status,
+          mollie_id: newPayment.id,
+          mollie_details: JSON.stringify(newPayment)
+        }).then(function(result) {
+          return res.json(newPayment);
+        }).catch(function(error) {
+          return res.json(error);
+        });
       });
     } else {
       return res.json(payment);
@@ -73,7 +80,7 @@ exports.index = function(req, res) {
  **/
 exports.mollieHook = function(req,res) {
   logger.debug('Handling mollie webhook request.');
-
+  console.log(mollie);
   mollie.payments.get(req.body.id, function(molliePayment) {
     logger.debug('Mollie payment request result: ', molliePayment);
 

@@ -17,7 +17,15 @@ module.exports = function(sequelize, DataTypes) {
     status: {
       type: DataTypes.STRING,
       defaultValue: 'concept'
+    },
+
+    mollie_id: {
+      type: DataTypes.STRING
+    },
+    mollie_details: {
+      type: DataTypes.TEXT
     }
+
   }, {
     classMethods: {
       associate: function(models) {
