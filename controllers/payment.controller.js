@@ -75,6 +75,9 @@ exports.mollieHook = function(req,res) {
   logger.debug('Handling mollie webhook request.');
 
   mollie.payments.get(req.body.id, function(molliePayment) {
+    logger.debug('Mollie payment request result: ', molliePayment);
+
+    // Handle payment errors
     if (molliePayment.error) {
       logger.debug(molliePayment.error);
       return res.json(403, molliePayment.error);
@@ -86,25 +89,53 @@ exports.mollieHook = function(req,res) {
       return res.json(403, {msg: 'payment has no payment_id', payment: molliePayment});
     }
 
-    console.log(molliePayment);
+
+    logger.debug('Finding payment in local payment db: ' + molliePayment.metadata.payment_id);
     // fetch the saved payment in db
     models.payment.findById(molliePayment.metadata.payment_id).then(function(payment){
-      if (!payment) { return payment; }
-
-      // Check for status update
-      if ( (payment.dataValues.status !== 'paid') && (molliePayment.status==='paid') ) {
-        // TODO: update balance
-
+      if (!payment) {
+        logger.debug('Payment not found! ');
+        return;
       }
-      // Update the payment status
+      logger.debug('Local payment found: ', payment);
+      logger.debug('Updating status: ' + molliePayment.status);
+      // Update the payment status in the db
       payment.update({status: molliePayment.status}).then(function(result) {
+        logger.debug('Payment update status result: ', result);
+        // Handle payment update
+        // New payment. Create a new transaction when a new payment is received.
+        if ( (payment.dataValues.status !== 'paid') && (molliePayment.status==='paid') ) {
+          // TODO: update balance
+          logger.debug('Payment received. Creating transaction. ');
+          models.transaction.create({
+            type: 'B',
+            amount: molliePayment.amount,
+            amount_meta: '[' + molliePayment.amount + ',0,0,0,0,0]',
+            to_id: req.user.id,
+            description: 'Inleg. Payment ' + payment.dataValues.id
+          }).then(function(transaction) {
+            console.log(transaction);
+            payment.update({
+              transaction_id: transaction.dataValues.id
+            }).then(function(result) {
+              console.log(result);
+            }).catch(function(error) {
+              console.log(error);
+            });
+          }).catch(function(error) {
+            console.log(error);
+          })
+          // TODO: Send a mail with the status update.
+
+        } else {
+          // TODO: Send a mail with the status update.
+
+        }
+
         return res.json(result);
       }).catch(function(error) {
         return res.json(error);
       });
-
-      // TODO: Send a mail with the status update.
-
     }).catch(function(error) {
       return res.json(error);
     });
