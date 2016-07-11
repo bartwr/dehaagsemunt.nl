@@ -5,7 +5,16 @@ var models = require('../models/index');
 
 exports.index = function(req,res) {
   console.log('Account Controller: Account index');
-  models.account.findAll().then(function(result){
+  console.log(req.user);
+  // exclude current user
+
+  models.account.findAll({
+    where: {
+      id: {
+        $ne: req.user.id
+      }
+    }
+  }).then(function(result){
     return res.json(result);
   }).catch(function(error){
     return res.json(error);
@@ -19,6 +28,9 @@ exports.show = function(req,res) {
     where: {
       id: req.params.id
     },
+    include: [
+      { model: models.account, as:'contact', through: 'account_contacts' }
+    ]
   }).then(function(result){
     return res.json(result);
   }).catch(function(error){
@@ -49,11 +61,15 @@ exports.showBalance = function(req,res) {
 
 exports.search = function(req,res) {
   var q = req.body.query;
-  console.log('Searching for username: ' + q);
+  if (!q) { return res.json({status: 'error', msg: 'No query found. '}); }
 
+  console.log('Searching for username: ', q);
   models.account.findAll({
     where: {
-      'username': { like: '%' + q + '%' } ,
+      username: { like: '%' + q + '%' },
+      id: {
+        $ne: req.user.id
+      }
     }
   }).then(function(result){
     return res.json(result);

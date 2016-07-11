@@ -53,6 +53,19 @@ exports.create = function(req,res) {
 };
 
 
+
+exports.index = function(req, res) {
+  console.log('Paymentservice index');
+  models.payment.findAll({where: {
+    account_id: req.user.id
+  }}).then(function(payments){
+    return res.json(payments);
+  }).catch(function(error) {
+    return res.json([error]);
+  });
+};
+
+
 /**
  *
  *
@@ -69,9 +82,13 @@ exports.mollieHook = function(req,res) {
     if (!molliePayment.id) {
       return res.json(403, {msg: 'payment not found', payment: molliePayment});
     }
+    if (!molliePayment.metadata && !molliePayment.metadata.payment_id) {
+      return res.json(403, {msg: 'payment has no payment_id', payment: molliePayment});
+    }
+
     console.log(molliePayment);
     // fetch the saved payment in db
-    models.payment.findById(molliePayment.payment_id).then(function(payment){
+    models.payment.findById(molliePayment.metadata.payment_id).then(function(payment){
       if (!payment) { return payment; }
 
       // Check for status update

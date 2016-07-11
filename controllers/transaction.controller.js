@@ -66,7 +66,7 @@ exports.show = function(req,res) {
  **/
 exports.create = function(req,res) {
   logger.debug('Creating a new transaction. ');
-
+  logger.debug(req.body);
   // Create the transaction.
   models.transaction.create(req.body).then(function(transaction) {
     // Update the balances after this transaction.

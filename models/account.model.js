@@ -24,6 +24,11 @@ module.exports = function(sequelize, DataTypes) {
           as: 'recipient',
           foreignKey: 'to_id'
         });
+
+        Account.belongsToMany(Account, {
+          as: 'contact',
+          through: 'acount_contacts'
+        });
       }
     }
   });

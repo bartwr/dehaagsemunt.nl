@@ -41,8 +41,8 @@ exports.canCreate = function(req,res,next) {
   }
 
   // Validate types
-  if (isNaN(parseInt(req.body.amount))) {
-    return res.json({status: 'error', msg: 'Amount is not a number: ' + req.body.amount});
+  if (isNaN(parseFloat(req.body.amount).toFixed(2))) {
+    return res.json({status: 'error', msg: 'Amount is not a decimal: ' + req.body.amount});
   }
   if (req.body.amount <= 0) {
     return res.json({status: 'error', msg: 'Amount should be greater than 0: ' + req.body.amount});
@@ -55,7 +55,7 @@ exports.canCreate = function(req,res,next) {
       },
       order: 'created_at DESC'
     }).then(function(balance) {
-      if (parseInt(balance.dataValues.amount) < parseInt(req.body.amount)) {
+      if (parseInt(balance.dataValues.amount) < parseFloat(req.body.amount).toFixed(2)) {
         return res.json({ status: 'error', msg: 'Not enough funds (max: ' + balance.dataValues.amount + ')' });
       } else {
         next();

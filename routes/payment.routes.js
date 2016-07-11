@@ -8,6 +8,12 @@ var jwt = require('./../controllers/jwt.controller');
 
 module.exports = function(app){
 
+  router.get('/',
+    jwt.checkAccount,
+    permission.canView,
+    controller.index
+  );
+
   router.post('/',
     jwt.checkAccount,
     permission.canCreate,
