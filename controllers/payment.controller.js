@@ -86,15 +86,13 @@ exports.index = function(req, res) {
 exports.mollieHook = function(req,res) {
 
   logger.debug('*** Mollie Hook *** ');
-  // logger.debug('Fetching payment from mollie: ' + req.body.id);
-  var mollie_id = req.body.id;
-  var payment_id;
-  var molliePayment, localPayment;
-  var mollieStatus, localStatus;
+  var mollie_id = req.body.id;      // Mollie payment id (stored in local db).
+  var payment_id;                   // Local db payment.id.
+  var molliePayment, localPayment;  // Reference to the two payments.
+  var mollieStatus, localStatus;    // Reference to the two stored payment statuses.
 
+  // Fetch the payment from mollie with the provided mollie_id
   mollie.payments.get(mollie_id, function(molliePayment) {
-    // logger.debug('Mollie payment request result: ');
-    payment_id = parseInt(molliePayment.metadata.payment_id);
     mollieStatus = String(molliePayment.status);
     // Handle payment errors
     if (molliePayment.error) {
@@ -104,21 +102,24 @@ exports.mollieHook = function(req,res) {
 
     // fetch the localPayment from database
     // logger.debug('Finding payment in local payment db: ' + parseInt(molliePayment.metadata.payment_id));
-    models.payment.findById(payment_id).then(function(payment) {
+    models.payment.findOne({ where: {
+      mollie_id: mollie_id
+    }}).then(function(payment) {
       if (!payment) {
-        logger.debug('Payment not found! ');
+        logger.debug('The requested payment was not found! ' + mollie_id );
         return res.status(403).json({msg: 'Payment not found! '});
       }
       // logger.debug('Local payment found: ', payment);
       localStatus = String(payment.status);
       logger.debug('Updating status: ' + mollieStatus + ' to: ' + localStatus);
       // Update the payment status in the db
-      payment.update({status: mollieStatus}).then(function(result) {
-        // New payment. Create a new transaction when a new payment is received.
+      payment.update({
+        status: mollieStatus,
+        mollie_details: molliePayment
+      }).then(function(result) {
+        // Create a new transaction when a new payment is received.
         if ( (localStatus !== 'paid') && (mollieStatus==='paid') ) {
-          // TODO: update balance
           logger.debug('Payment received. Creating transaction. ');
-          console.log(payment.dataValues);
           var t = {
             type: 'B',
             amount: molliePayment.amount,
