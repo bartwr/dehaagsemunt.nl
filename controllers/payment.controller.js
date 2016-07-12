@@ -3,6 +3,7 @@
 var settings = require('../config/settings');
 var logger = require('winston');
 var models = require('../models/index');
+var balanceCtrl = require('./balance.controller');
 var Mollie = require('mollie-api-node');
 var mollie = new Mollie.API.Client;
 mollie.setApiKey(settings.mollie.apikey);
@@ -75,75 +76,88 @@ exports.index = function(req, res) {
 
 /**
  *
+ *  Get payment from mollie (molliePayment)
+ *  Get payment from database (localPayment)
+ *  Update localPayment with fetched molliePayment
+ *
  *
  *
  **/
 exports.mollieHook = function(req,res) {
-  logger.debug('Handling mollie webhook request.');
-  console.log(mollie);
-  mollie.payments.get(req.body.id, function(molliePayment) {
-    logger.debug('Mollie payment request result: ', molliePayment);
 
+  logger.debug('*** Mollie Hook *** ');
+  // logger.debug('Fetching payment from mollie: ' + req.body.id);
+  var mollie_id = req.body.id;
+  var payment_id;
+  var molliePayment, localPayment;
+  var mollieStatus, localStatus;
+
+  mollie.payments.get(mollie_id, function(molliePayment) {
+    // logger.debug('Mollie payment request result: ');
+    payment_id = parseInt(molliePayment.metadata.payment_id);
+    mollieStatus = String(molliePayment.status);
     // Handle payment errors
     if (molliePayment.error) {
-      logger.debug(molliePayment.error);
-      return res.json(403, molliePayment.error);
-    }
-    if (!molliePayment.id) {
-      return res.json(403, {msg: 'payment not found', payment: molliePayment});
-    }
-    if (!molliePayment.metadata && !molliePayment.metadata.payment_id) {
-      return res.json(403, {msg: 'payment has no payment_id', payment: molliePayment});
+      logger.debug('There was an error! ', molliePayment.error);
+      return res.status(403).json(molliePayment.error);
     }
 
-
-    logger.debug('Finding payment in local payment db: ' + molliePayment.metadata.payment_id);
-    // fetch the saved payment in db
-    models.payment.findById(molliePayment.metadata.payment_id).then(function(payment){
+    // fetch the localPayment from database
+    // logger.debug('Finding payment in local payment db: ' + parseInt(molliePayment.metadata.payment_id));
+    models.payment.findById(payment_id).then(function(payment) {
       if (!payment) {
         logger.debug('Payment not found! ');
-        return;
+        return res.status(403).json({msg: 'Payment not found! '});
       }
-      logger.debug('Local payment found: ', payment);
-      logger.debug('Updating status: ' + molliePayment.status);
+      // logger.debug('Local payment found: ', payment);
+      localStatus = String(payment.status);
+      logger.debug('Updating status: ' + mollieStatus + ' to: ' + localStatus);
       // Update the payment status in the db
-      payment.update({status: molliePayment.status}).then(function(result) {
-        logger.debug('Payment update status result: ', result);
-        // Handle payment update
+      payment.update({status: mollieStatus}).then(function(result) {
         // New payment. Create a new transaction when a new payment is received.
-        if ( (payment.dataValues.status !== 'paid') && (molliePayment.status==='paid') ) {
+        if ( (localStatus !== 'paid') && (mollieStatus==='paid') ) {
           // TODO: update balance
           logger.debug('Payment received. Creating transaction. ');
-          models.transaction.create({
+          console.log(payment.dataValues);
+          var t = {
             type: 'B',
             amount: molliePayment.amount,
             amount_meta: '[' + molliePayment.amount + ',0,0,0,0,0]',
-            to_id: req.user.id,
-            description: 'Inleg. Payment ' + payment.dataValues.id
-          }).then(function(transaction) {
-            console.log(transaction);
-            payment.update({
-              transaction_id: transaction.dataValues.id
-            }).then(function(result) {
+            to_id: payment.dataValues.account_id,
+            description: 'Inleg door user. Payment nummer: ' + payment.dataValues.id
+          };
+          console.log('new transaction, ', t);
+
+          // Create new transaction based on payment.
+          models.transaction.create(t).then(function(transaction) {
+            // Update balance after a succesful transaction.
+            // TODO: Hook into model?
+            balanceCtrl.handleTransaction(transaction.dataValues.id, function(result) {
               console.log(result);
-            }).catch(function(error) {
-              console.log(error);
+              // console.log(result);
+              payment.update({transaction_id: transaction.dataValues.id}).then(function(result) {
+                console.log('payment update resutl: ', result);
+                // Send positive response to Mollie
+                return res.status(200);
+              }).catch(function(error) {
+                logger.warning(error);
+                return res.status(403).json(error);
+              });
             });
-          }).catch(function(error) {
-            console.log(error);
-          })
+          });
           // TODO: Send a mail with the status update.
 
         } else {
           // TODO: Send a mail with the status update.
-
+          console.log('No paid result status: ', molliePayment);
+          return res.json(molliePayment);
         }
-
-        return res.json(result);
       }).catch(function(error) {
+        console.log('molliehook update status error: ', error);
         return res.json(error);
       });
     }).catch(function(error) {
+      console.log('molliehook findbyID error: ', error);
       return res.json(error);
     });
   });
