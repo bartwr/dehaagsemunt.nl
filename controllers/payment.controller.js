@@ -14,23 +14,25 @@ mollie.setApiKey(settings.mollie.apikey);
  *
  **/
 exports.create = function(req,res) {
-  logger.debug('Creating a new payment');
-  console.log(req.user);
+  logger.debug('Starting to create a new payment.');
+  console.log(req.body);
+
   // Save payment in db with status -in-progress
   var payment = {
     description: 'Inleg De Haagse Munt',
-    amount: req.body.amount,
+    amount: Number(req.body.payment).toFixed(2),
+    costs: Number(req.body.costs).toFixed(2),
     status: 'concept',
     account_id: req.user.id
   };
-  console.log(payment);
+  console.log('Creating new payment: ', payment);
 
   models.payment.create(payment).then(function(payment) {
     console.log(payment.dataValues);
     if (payment) {
       logger.debug('sending payment to mollie.');
       var molliePayment = {
-        amount: payment.dataValues.amount,
+        amount: Number(payment.dataValues.amount) + Number(payment.dataValues.costs),
         description: 'Inleg De Haagse Munt: Order id: ' + payment.dataValues.id,
         redirectUrl: 'https://app.dehaagsemunt.nl/payments/'+ payment.dataValues.id,
         metadata: {
@@ -93,6 +95,7 @@ exports.mollieHook = function(req,res) {
 
   // Fetch the payment from mollie with the provided mollie_id
   mollie.payments.get(mollie_id, function(molliePayment) {
+    console.log(molliePayment);
     mollieStatus = String(molliePayment.status);
     // Handle payment errors
     if (molliePayment.error) {
@@ -101,7 +104,6 @@ exports.mollieHook = function(req,res) {
     }
 
     // fetch the localPayment from database
-    // logger.debug('Finding payment in local payment db: ' + parseInt(molliePayment.metadata.payment_id));
     models.payment.findOne({ where: {
       mollie_id: mollie_id
     }}).then(function(payment) {
@@ -111,48 +113,16 @@ exports.mollieHook = function(req,res) {
       }
       // logger.debug('Local payment found: ', payment);
       localStatus = String(payment.status);
-      logger.debug('Updating status: ' + mollieStatus + ' to: ' + localStatus);
+      logger.debug('Updating status: ' + localStatus + ' to: ' + mollieStatus);
       // Update the payment status in the db
       payment.update({
         status: mollieStatus,
-        mollie_details: molliePayment
+        mollie_details: JSON.stringify(molliePayment)
       }).then(function(result) {
-        // Create a new transaction when a new payment is received.
-        if ( (localStatus !== 'paid') && (mollieStatus==='paid') ) {
-          logger.debug('Payment received. Creating transaction. ');
-          var t = {
-            type: 'B',
-            amount: molliePayment.amount,
-            amount_meta: '[' + molliePayment.amount + ',0,0,0,0,0]',
-            to_id: payment.dataValues.account_id,
-            description: 'Inleg door user. Payment nummer: ' + payment.dataValues.id
-          };
-          console.log('new transaction, ', t);
+        // Payment is received.
+        console.log('payment update result');
 
-          // Create new transaction based on payment.
-          models.transaction.create(t).then(function(transaction) {
-            // Update balance after a succesful transaction.
-            // TODO: Hook into model?
-            balanceCtrl.handleTransaction(transaction.dataValues.id, function(result) {
-              console.log(result);
-              // console.log(result);
-              payment.update({transaction_id: transaction.dataValues.id}).then(function(result) {
-                console.log('payment update resutl: ', result);
-                // Send positive response to Mollie
-                return res.status(200);
-              }).catch(function(error) {
-                logger.warning(error);
-                return res.status(403).json(error);
-              });
-            });
-          });
-          // TODO: Send a mail with the status update.
-
-        } else {
-          // TODO: Send a mail with the status update.
-          console.log('No paid result status: ', molliePayment);
-          return res.json(molliePayment);
-        }
+        return res.json({ status: 'success' });
       }).catch(function(error) {
         console.log('molliehook update status error: ', error);
         return res.json(error);

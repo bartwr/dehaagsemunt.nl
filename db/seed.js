@@ -28,9 +28,7 @@ module.exports = {
               to_id: i+1,
               description: 'Inleg'
             }).then(function(result) {
-              balanceCtrl.handleTransaction(result.dataValues.id, function(result) {
-                // console.log(result);
-              });
+              
             });
           }
         });

@@ -31,8 +31,7 @@ var db = require('./models');
 if (process.env.SYNCDB === 'true') {
   db.sequelize.sync({force: true}).then(function(result) {
     // Seed the database
-    var s = require('./db/seed');
-    s.seed();
+    require('./db/seed').seed();
     start();
   });
 } else {

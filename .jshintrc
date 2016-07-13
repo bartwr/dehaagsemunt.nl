@@ -1,3 +1,9 @@
 {
-  "camelcase": false
+  "camelcase": false,
+  "node":true,
+  "globals": {
+    "exports":true,
+    "require":true,
+    "console":true
+  }
 }

@@ -25,8 +25,8 @@ function getLatestBalance(id, cb){
 
 function subtractBalance(balance, amount) {
 
-  // Make sure we are working with integers
-  amount = parseInt(amount);
+  // Make sure we are working with Numbers
+  amount = Number(amount);
   // Setup working balances
   logger.debug('Start Subtract Balance.');
   balance = balance.reverse();
@@ -35,7 +35,7 @@ function subtractBalance(balance, amount) {
 
   // traverse through each fundStep (oldest funds first) and transfer money
   for (var i=0; i<balance.length; i++) {
-    var stepValue = parseInt(balance[ i]);
+    var stepValue = Number(balance[ i]);
     logger.debug('stepvalue: ' + i + ': ' + stepValue);
     if (amount>0 && stepValue>0) {
       logger.debug('There are funds in this step! ');
@@ -72,7 +72,7 @@ function addBalance(amount_meta, change) {
   // TODO: Validate input;
 
   for (var i=0; i<amount_meta.length; i++) {
-    amount_meta[ i] += parseInt(change[ i]);
+    amount_meta[ i] += Number(change[ i]);
   }
 
   return amount_meta;
@@ -95,7 +95,7 @@ function calculateTotal(amount_meta) {
   // calculate total
   var total =0;
   for (var k=0; k<amount_meta.length; k++) {
-    total += parseInt(amount_meta[ k]);
+    total += Number(amount_meta[ k]);
   }
   logger.debug('Total calculated: ', total);
   return total;
@@ -104,7 +104,7 @@ function calculateTotal(amount_meta) {
 
 /***
  *
- * Handle transaction: Create new balances for sender and receiver. 
+ * Handle transaction: Create new balances for sender and receiver.
  *
  **/
 exports.handleTransaction = function(transaction_id, cb) {
@@ -113,7 +113,7 @@ exports.handleTransaction = function(transaction_id, cb) {
 
   models.transaction.findById(transaction_id).then(function(transaction) {
 
-    var transactionAmount = parseInt(transaction.dataValues.amount);
+    var transactionAmount = Number(transaction.dataValues.amount);
 
     // variables for from account
     var from_id = transaction.dataValues.from_id;

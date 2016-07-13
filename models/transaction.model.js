@@ -39,5 +39,14 @@ module.exports = function(sequelize, DataTypes) {
     }
   });
 
+
+  Transaction.afterCreate('updateBalance', function(transaction, options) {
+    logger.debug('Transaction Hook After Create: Updating balance. ');
+    var balanceController = require('../controllers/balance.controller');
+    balanceController.handleTransaction(transaction.dataValues.id, function(result) {
+      console.log(result);
+    });
+  });
+
   return Transaction;
 };
