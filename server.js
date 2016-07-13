@@ -14,36 +14,32 @@ var Watchdog = require('./controllers/watchdog.controller');
 // Setup logging
 require('./config/logger').logger(app);
 
-
 // Setup express
 var server = require('http').createServer(app);
 require('./config/express')(app);
 
 // Setup Socket.io
-require('./config/socket')(server);
+// require('./config/socket')(server);
 
 // Setup routes
 require('./routes')(app);
 
-
 // Setup models
 var db = require('./models');
 
+// Synchronize the database if needed
 if (process.env.SYNCDB === 'true') {
   db.sequelize.sync({force: true}).then(function(result) {
-    // seed db
+    // Seed the database
     var s = require('./db/seed');
     s.seed();
-  //   // var dbseed = require('./bin/db/seed');
-  //   // dbseed.organizations(function(result) {
-  //   //   require('./bin/cron/events').syncEvents();
-       start();
-  //   // });
+    start();
   });
 } else {
   start();
 }
 
+// Start the server
 function start() {
   server.listen(settings.port, settings.ip, function () {
     logger.debug('Express server listening on %d, in %s mode', settings.port, settings.environment);

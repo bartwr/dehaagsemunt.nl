@@ -14,14 +14,14 @@ module.exports = function(app){
     controller.index
   );
 
+  router.post('/mollie-hook',
+    controller.mollieHook
+  );
+
   router.post('/',
     jwt.checkAccount,
     permission.canCreate,
     controller.create
-  );
-
-  router.post('/mollie-hook',
-    controller.mollieHook
   );
 
   app.use('/payment', router);

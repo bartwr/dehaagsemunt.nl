@@ -47,7 +47,7 @@ module.exports = {
   },
 
   sendgrid : {
-    key         : process.env.SENDGRID_API_KEY      || env.SENDGRID_API_KEY        || '',
+    key         : process.env.SENDGRID_APIKEY      || env.SENDGRID_APIKEY        || '',
   },
 
   aws: {
