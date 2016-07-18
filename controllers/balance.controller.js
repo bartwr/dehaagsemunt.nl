@@ -230,6 +230,40 @@ exports.handleTransaction = function(transaction_id, cb) {
 
 
 
-exports.create = function(req,res) {
-  models.transaction.findOne(1).then(function(result){}).catch(function(error){});
+/**
+ *
+ *
+ *
+ **/
+exports.index = function(req, res) {
+  var Balance = require('../models/index').balance;
+  console.log(Balance);
+  Balance.findAll({
+    where: {
+      account_id: req.body.account_id
+    }
+  }).then(function(result){
+    return res.json(result);
+  }).catch(function(error) {
+    return res.json(error);
+  });
+};
+
+
+/**
+ *
+ *
+ *
+ **/
+exports.show = function(req,res) {
+  models.balance.findOne({
+    where: {
+      account_id: req.body.account_id
+    }
+  }).then(function(result){
+    console.log('balance show result', result);
+    return res.json(result);
+  }).catch(function(error) {
+    return res.json(error);
+  });
 };

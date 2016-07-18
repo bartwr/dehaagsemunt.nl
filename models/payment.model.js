@@ -19,10 +19,16 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false,
     },
+    // Optional extra donation
+    donation: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false,
+    },
 
+    
     status: {
       type: DataTypes.STRING,
-      defaultValue: 'concept'
+      defaultValue: 'draft'
     },
 
     mollie_id: {

@@ -15,22 +15,20 @@ mollie.setApiKey(settings.mollie.apikey);
  **/
 exports.create = function(req,res) {
   logger.debug('Starting to create a new payment.');
-  console.log(req.body);
 
   // Save payment in db with status -in-progress
   var payment = {
-    description: 'Inleg De Haagse Munt',
-    amount: Number(req.body.payment).toFixed(2),
-    costs: Number(req.body.costs).toFixed(2),
-    status: 'concept',
-    account_id: req.user.id
+    description : 'Inleg De Haagse Munt',
+    amount      : Number(req.body.payment).toFixed(2),
+    costs       : Number(req.body.costs).toFixed(2),
+    donation    : Number(req.body.donation).toFixed(2),
+    status      : 'draft',
+    account_id  : req.user.id
   };
-  console.log('Creating new payment: ', payment);
 
   models.payment.create(payment).then(function(payment) {
-    console.log(payment.dataValues);
     if (payment) {
-      logger.debug('sending payment to mollie.');
+      logger.debug('Payment created. Sending payment to mollie.');
       var molliePayment = {
         amount: Number(payment.dataValues.amount) + Number(payment.dataValues.costs),
         description: 'Inleg De Haagse Munt: Order id: ' + payment.dataValues.id,

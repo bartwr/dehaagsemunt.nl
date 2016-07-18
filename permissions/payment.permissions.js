@@ -28,9 +28,13 @@ exports.canCreate = function(req,res,next) {
   if (isNaN(parseInt(req.body.amount))) {
     return res.json({status: 'error', msg: 'Amount is not a number: ' + req.body.amount});
   }
+
+  // TODO: Validate amounts. 
   if (req.body.amount <= 0) {
     return res.json({status: 'error', msg: 'Amount should be greater than 0: ' + req.body.amount});
   }
+
+
   // All good
   logger.debug('User can create a transcation');
   next();
