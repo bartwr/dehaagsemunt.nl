@@ -1,0 +1,36 @@
+
+.navbar-light .navbar-nav {
+  li {
+    a.nav-link {
+      font-weight: 600;
+      text-transform: lowercase;
+      color: #444;
+    }
+  }
+  .active {
+    a {
+      color: $brand-primary !important;
+    }
+  }
+}
+
+.menu-user-container {
+  img {
+    margin-right: 5px;
+  }
+  a.nav-link {
+    padding: 7px;
+    &:hover {
+      background-color: $brand-primary;
+    }
+  }
+  .dropdown-menu {
+    right: 0;
+    border-radius: 0;
+    left: inherit;
+  }
+}
+
+.menu-user_actions-container {
+  float: right;
+}

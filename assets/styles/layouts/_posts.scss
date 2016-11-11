@@ -1,0 +1,75 @@
+
+.single-verzoek {
+  .page-header {
+    h2 {
+      font-family: 'Source Sans Pro', sans-serif;
+      font-size: 16px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+  }
+
+  .request-letter {
+    border: 1px solid #eee;
+    padding: 20px;
+    font-size: 13px;
+    color: #888;
+    .request-status.concept {
+      display: block;
+      text-align: center;
+      font-size: 24px;
+      color: rgba(255,0,0,0.5);
+      text-transform: uppercase;
+      font-family: 'Bungee';
+    }
+    .request-date {
+      text-align: right;
+      display: block;
+    }
+    .request-content {
+      color: #333;
+    }
+    .request-actions {
+      text-align: right;
+      a.btn-primary {
+        color: #FFF;
+        margin-left: 10px;
+      }
+    }
+  }
+
+  .request-communication {
+    margin-top: 30px;
+    dd {
+      border: 1px solid #eee;
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+  }
+
+  .request-updates {
+    margin-top: 30px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .request-details {
+    font-size: 14px;
+    .days-count {
+      text-align: center;
+      padding: 10px 0 40px;
+      font-weight: 600;
+      font-size: 120%;
+      .count {
+        font-size: 300%;
+      }
+    }
+    .label {
+      font-weight: 600;
+      width: 40%;
+      display: block;
+      float: left;
+    }
+
+  }
+}

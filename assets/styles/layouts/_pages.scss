@@ -1,0 +1,145 @@
+body.login {
+  background-color: #FFF;
+}
+body.home {
+  .splash {
+    background-color: $brand-primary;
+    color: #FFF;
+    text-align: center;
+    padding: 80px 0;
+    img {
+      width: 50px;
+      margin-bottom: 30px;
+    }
+    h2{
+      font-weight: 200;
+      font-family: 'Source Sans Pro', sans-serif;
+      font-size: 18px;
+      text-transform: uppercase;
+      margin-bottom: 1.5em;
+    }
+    .user-actions {
+      a {
+        margin: 10px;
+      }
+    }
+  }
+
+  .features {
+    padding: 50px;
+    color: #444;
+  }
+
+  .section.actions {
+    text-align: center;
+    padding: 30px;
+  }
+}
+
+body {
+  .page-main {
+    padding-bottom: 50px;
+  }
+  .page-header {
+    text-align: center;
+    padding: 60px;
+    background-color: $brand-primary;
+    color: #FFF;
+    margin-bottom: 3em;
+  }
+
+}
+
+body.login {
+  background-color: $brand-primary;
+  h1 a {
+    background-image: url('../images/mollie-logo.png');
+    background-position: center center;
+    background-size: 370px;
+    background-repeat: no-repeat;
+    width: auto;
+  }
+  #backtoblog {
+    display: none;
+  }
+}
+
+body.inleg{
+  input {
+    display: inline-block;
+    width: auto;
+    vertical-align: middle;
+  }
+  table {
+    tr {
+      th {
+        text-align: right;
+      }
+    }
+    tr {
+      td {
+        text-align: right;
+        background-color: #FFF;
+      }
+      &.sum {
+        td {
+          font-weight: 600;
+          text-align: right;
+          border-top: 2px solid #aaa;
+          background-color: #FFF;
+        }
+      }
+    }
+  }
+  .action-buttons {
+    text-align: right;
+  }
+}
+
+body.dashboard {
+  th {
+    font-weight: 600;
+  }
+  // Blocks
+  .block {
+    margin: 0 0 10px;
+    background-color: #ffffff;
+    border: 1px solid #dbe1e8;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    .block-title {
+      background-color: #f9fafc;
+      border-bottom: 1px solid #eaedf1;
+      font-size: 14px;
+      line-height: 32px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      .block-options {
+        min-height: 40px;
+        margin: 0 6px;
+        line-height: 37px;
+        a.btn {
+          border-radius: 15px;
+          padding-right: 8px;
+          padding-left: 8px;
+          min-width: 30px;
+          text-align: center;
+          background-color: #FFF;
+          border-color: #dbe1e8;
+          color: #394263;
+          margin: 1px 0;
+          &:hover {
+            border-color: #666;
+          }
+        }
+      }
+    }
+    .block-content {
+      margin-bottom: 20px;
+      padding: 20px;
+    }
+  }
+}
